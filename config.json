@@ -1,0 +1,38 @@
+{
+  "rtsp_url": "rtsps://192.168.0.1:7441/7yfuJtcQltl6NtTV?enableSrtp",
+  "snapshot_interval_seconds": 2,
+  "smoothing_window": 5,
+  "smoothing_required_agreement": 4,
+  "bollards": [
+    {
+      "name": "bollard_left",
+      "roi": [900, 260, 85, 130],
+      "led_raised_y_range": [0, 60],
+      "led_lowered_y_range": [160, 220],
+      "led_hue_range": [0, 15],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220
+    },
+    {
+      "name": "bollard_middle",
+      "roi": [1050, 260, 85, 130],
+      "led_raised_y_range": [0, 60],
+      "led_lowered_y_range": [160, 220],
+      "led_hue_range": [0, 15],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220
+    },
+    {
+      "name": "bollard_right",
+      "roi": [1230, 280, 85, 130],
+      "led_raised_y_range": [0, 60],
+      "led_lowered_y_range": [160, 220],
+      "led_hue_range": [0, 15],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220
+    }
+  ]
+}
