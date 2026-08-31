@@ -63,10 +63,10 @@ import numpy as np
 @dataclass
 class BollardConfig:
     name: str
-    roi: tuple            # (x, y, w, h) in full-frame coordinates
-    led_raised_y_range: tuple    # (y0, y1) within the ROI
-    led_lowered_y_range: tuple   # (y0, y1) within the ROI
-    led_hue_range: tuple         # (h0, h1) OpenCV hue units 0-179, daytime only
+    roi: tuple  # (x, y, w, h) in full-frame coordinates
+    led_raised_y_range: tuple  # (y0, y1) within the ROI
+    led_lowered_y_range: tuple  # (y0, y1) within the ROI
+    led_hue_range: tuple  # (h0, h1) OpenCV hue units 0-179, daytime only
     led_min_saturation: int
     led_min_value_day: int
     led_min_value_night: int
@@ -75,7 +75,9 @@ class BollardConfig:
 @dataclass
 class BollardState:
     config: BollardConfig
-    history: collections.deque = field(default_factory=lambda: collections.deque(maxlen=10))
+    history: collections.deque = field(
+        default_factory=lambda: collections.deque(maxlen=10)
+    )
     stable_state: str = "UNKNOWN"
 
 
@@ -85,16 +87,18 @@ def load_config(path: str):
 
     bollards = []
     for b in raw["bollards"]:
-        bollards.append(BollardConfig(
-            name=b["name"],
-            roi=tuple(b["roi"]),
-            led_raised_y_range=tuple(b["led_raised_y_range"]),
-            led_lowered_y_range=tuple(b["led_lowered_y_range"]),
-            led_hue_range=tuple(b["led_hue_range"]),
-            led_min_saturation=b["led_min_saturation"],
-            led_min_value_day=b["led_min_value_day"],
-            led_min_value_night=b["led_min_value_night"],
-        ))
+        bollards.append(
+            BollardConfig(
+                name=b["name"],
+                roi=tuple(b["roi"]),
+                led_raised_y_range=tuple(b["led_raised_y_range"]),
+                led_lowered_y_range=tuple(b["led_lowered_y_range"]),
+                led_hue_range=tuple(b["led_hue_range"]),
+                led_min_saturation=b["led_min_saturation"],
+                led_min_value_day=b["led_min_value_day"],
+                led_min_value_night=b["led_min_value_night"],
+            )
+        )
 
     return raw, bollards
 
@@ -103,7 +107,7 @@ def open_stream(rtsp_url: str) -> cv2.VideoCapture:
     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
     if not cap.isOpened():
         raise RuntimeError(
-            f"Could not open stream. Test with `ffprobe \"{rtsp_url}\"` "
+            f'Could not open stream. Test with `ffprobe "{rtsp_url}"` '
             "first to confirm the URL/credentials are correct and that "
             "ffmpeg can decode it before troubleshooting further."
         )
@@ -127,7 +131,9 @@ def is_night_frame(frame_bgr: np.ndarray) -> bool:
     return mean_saturation < 25.0  # tune if your camera's IR cut differs
 
 
-def find_led_centroid_y(roi_bgr: np.ndarray, cfg: BollardConfig, night: bool) -> Optional[float]:
+def find_led_centroid_y(
+    roi_bgr: np.ndarray, cfg: BollardConfig, night: bool
+) -> Optional[float]:
     """Return the y-coordinate (within the ROI) of the LED blob, or None."""
     hsv = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
@@ -174,7 +180,7 @@ def evaluate_frame(frame_bgr: np.ndarray, bollards: list[BollardConfig]) -> dict
     results = {}
     for cfg in bollards:
         x, y, w, h = cfg.roi
-        roi = frame_bgr[y:y + h, x:x + w]
+        roi = frame_bgr[y : y + h, x : x + w]
         led_y = find_led_centroid_y(roi, cfg, night)
         state = classify_state(led_y, cfg)
         results[cfg.name] = {
@@ -185,7 +191,9 @@ def evaluate_frame(frame_bgr: np.ndarray, bollards: list[BollardConfig]) -> dict
     return results
 
 
-def smooth_states(states: dict, trackers: dict, required_agreement: int, window: int) -> dict:
+def smooth_states(
+    states: dict, trackers: dict, required_agreement: int, window: int
+) -> dict:
     stable = {}
     for name, result in states.items():
         tracker = trackers.setdefault(name, collections.deque(maxlen=window))
@@ -213,11 +221,23 @@ def publish_states(stable_states: dict):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--config", default="config.json")
-    parser.add_argument("--snapshot", help="Save a single frame to this path and exit (for calibration)")
-    parser.add_argument("--once", action="store_true", help="Evaluate a single frame and print raw results")
-    parser.add_argument("--loop", action="store_true", help="Continuously poll and print smoothed states")
+    parser.add_argument(
+        "--snapshot", help="Save a single frame to this path and exit (for calibration)"
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Evaluate a single frame and print raw results",
+    )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help="Continuously poll and print smoothed states",
+    )
     args = parser.parse_args()
 
     raw_cfg, bollards = load_config(args.config)
@@ -231,13 +251,7 @@ def main():
                 # ---------------------------------------------------------
                 # Draw the main ROI.
                 # ---------------------------------------------------------
-                cv2.rectangle(
-                    frame,
-                    (x, y),
-                    (x + w, y + h),
-                    (0, 255, 0),
-                    2
-                )
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 # Bollard name.
                 cv2.putText(
                     frame,
@@ -247,7 +261,7 @@ def main():
                     0.7,
                     (0, 255, 0),
                     2,
-                    cv2.LINE_AA
+                    cv2.LINE_AA,
                 )
                 # ---------------------------------------------------------
                 # Draw LED raised/lowered Y ranges.
@@ -257,6 +271,7 @@ def main():
                 # ---------------------------------------------------------
                 raised_y0, raised_y1 = cfg.led_raised_y_range
                 lowered_y0, lowered_y1 = cfg.led_lowered_y_range
+
                 def draw_led_range(y0, y1, label, thickness=2):
                     full_y0 = y + y0
                     full_y1 = y + y1
@@ -270,23 +285,19 @@ def main():
                         (x, clipped_y0),
                         (x + w, clipped_y0),
                         (255, 255, 0),
-                        thickness
+                        thickness,
                     )
                     cv2.line(
                         frame,
                         (x, clipped_y1),
                         (x + w, clipped_y1),
                         (255, 255, 0),
-                        thickness
+                        thickness,
                     )
                     # Draw a translucent-ish band using an overlay.
                     overlay = frame.copy()
                     cv2.rectangle(
-                        overlay,
-                        (x, clipped_y0),
-                        (x + w, clipped_y1),
-                        (255, 255, 0),
-                        -1
+                        overlay, (x, clipped_y0), (x + w, clipped_y1), (255, 255, 0), -1
                     )
                     cv2.addWeighted(overlay, 0.12, frame, 0.88, 0, frame)
                     # Label.
@@ -299,36 +310,21 @@ def main():
                         0.5,
                         (255, 255, 0),
                         1,
-                        cv2.LINE_AA
+                        cv2.LINE_AA,
                     )
-                draw_led_range(
-                    raised_y0,
-                    raised_y1,
-                    "RAISED"
-                )
-                draw_led_range(
-                    lowered_y0,
-                    lowered_y1,
-                    "LOWERED"
-                )
+
+                draw_led_range(raised_y0, raised_y1, "RAISED")
+                draw_led_range(lowered_y0, lowered_y1, "LOWERED")
                 # ---------------------------------------------------------
                 # Draw the centre of each configured LED range.
                 # ---------------------------------------------------------
                 raised_centre = y + (raised_y0 + raised_y1) / 2
                 lowered_centre = y + (lowered_y0 + lowered_y1) / 2
                 cv2.circle(
-                    frame,
-                    (x + w // 2, int(raised_centre)),
-                    5,
-                    (0, 255, 255),
-                    -1
+                    frame, (x + w // 2, int(raised_centre)), 5, (0, 255, 255), -1
                 )
                 cv2.circle(
-                    frame,
-                    (x + w // 2, int(lowered_centre)),
-                    5,
-                    (0, 255, 255),
-                    -1
+                    frame, (x + w // 2, int(lowered_centre)), 5, (0, 255, 255), -1
                 )
                 # ---------------------------------------------------------
                 # Draw configuration text to the right of the ROI.
@@ -354,7 +350,7 @@ def main():
                         0.5,
                         (255, 255, 255),
                         1,
-                        cv2.LINE_AA
+                        cv2.LINE_AA,
                     )
             cv2.imwrite(args.snapshot, frame)
             print(

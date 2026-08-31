@@ -27,7 +27,9 @@ def seed_config_if_missing():
     """On first run against a fresh volume, copy the bundled default config."""
     if os.path.exists(CONFIG_PATH):
         return
-    default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.default.json")
+    default_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config.default.json"
+    )
     if not os.path.exists(default_path):
         return
     os.makedirs(os.path.dirname(CONFIG_PATH) or ".", exist_ok=True)
@@ -35,13 +37,14 @@ def seed_config_if_missing():
         dst.write(src.read())
     print(f"Seeded {CONFIG_PATH} from bundled default config.")
 
+
 app = Flask(__name__)
 
 # Shared state between the background loop and the web routes.
 STATE_LOCK = threading.Lock()
-LATEST_STATES = {}       # smoothed states, e.g. {"bollard_left": "RAISED"}
-LATEST_RAW = {}          # raw per-frame results (debug)
-LATEST_FRAME = None      # last successfully captured frame (numpy array)
+LATEST_STATES = {}  # smoothed states, e.g. {"bollard_left": "RAISED"}
+LATEST_RAW = {}  # raw per-frame results (debug)
+LATEST_FRAME = None  # last successfully captured frame (numpy array)
 STREAM_OK = False
 STREAM_ERROR = None
 
@@ -52,6 +55,7 @@ _mqtt_discovery_sent = set()
 # --------------------------------------------------------------------------
 # MQTT / Home Assistant
 # --------------------------------------------------------------------------
+
 
 def get_mqtt_client(mqtt_cfg: dict):
     global _mqtt_client
@@ -126,6 +130,7 @@ def publish_states(client, mqtt_cfg: dict, stable_states: dict):
 # --------------------------------------------------------------------------
 # Background detection loop
 # --------------------------------------------------------------------------
+
 
 def background_loop():
     global LATEST_STATES, LATEST_RAW, LATEST_FRAME, STREAM_OK, STREAM_ERROR
@@ -202,6 +207,7 @@ def background_loop():
 # Web routes
 # --------------------------------------------------------------------------
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -229,12 +235,14 @@ def api_save_config():
 @app.route("/api/state")
 def api_state():
     with STATE_LOCK:
-        return jsonify({
-            "states": LATEST_STATES,
-            "raw": LATEST_RAW,
-            "stream_ok": STREAM_OK,
-            "stream_error": STREAM_ERROR,
-        })
+        return jsonify(
+            {
+                "states": LATEST_STATES,
+                "raw": LATEST_RAW,
+                "stream_ok": STREAM_OK,
+                "stream_error": STREAM_ERROR,
+            }
+        )
 
 
 @app.route("/api/snapshot.jpg")
@@ -258,8 +266,16 @@ def api_snapshot():
                 "TRANSITIONING": (0, 255, 255),
             }.get(state, (0, 0, 255))
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            cv2.putText(frame, f"{cfg.name}: {state}", (x, max(y - 8, 15)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+            cv2.putText(
+                frame,
+                f"{cfg.name}: {state}",
+                (x, max(y - 8, 15)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                color,
+                1,
+                cv2.LINE_AA,
+            )
     except Exception:
         pass
 
@@ -297,10 +313,12 @@ def api_calibrate():
 
     night = detector.is_night_frame(frame)
     x, y, w, h = cfg.roi
-    roi = frame[y:y + h, x:x + w]
+    roi = frame[y : y + h, x : x + w]
     led_y = detector.find_led_centroid_y(roi, cfg, night)
     if led_y is None:
-        return jsonify({"error": "could not detect LED in current frame -- check ROI/thresholds"}), 422
+        return jsonify(
+            {"error": "could not detect LED in current frame -- check ROI/thresholds"}
+        ), 422
 
     new_range = [max(0, int(led_y - padding)), int(led_y + padding)]
 
@@ -312,7 +330,9 @@ def api_calibrate():
                 b["led_lowered_y_range"] = new_range
 
     detector.save_config(CONFIG_PATH, raw_cfg)
-    return jsonify({"ok": True, "led_y": led_y, "new_range": new_range, "night_mode": night})
+    return jsonify(
+        {"ok": True, "led_y": led_y, "new_range": new_range, "night_mode": night}
+    )
 
 
 def main():

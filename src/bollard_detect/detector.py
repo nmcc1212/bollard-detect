@@ -22,10 +22,10 @@ CONFIG_LOCK = threading.Lock()
 class BollardConfig:
     name: str
     display_name: str
-    roi: tuple                   # (x, y, w, h) in full-frame coordinates
-    led_raised_y_range: tuple    # (y0, y1) within the ROI
-    led_lowered_y_range: tuple   # (y0, y1) within the ROI
-    led_hue_range: tuple         # (h0, h1) OpenCV hue units 0-179, daytime only
+    roi: tuple  # (x, y, w, h) in full-frame coordinates
+    led_raised_y_range: tuple  # (y0, y1) within the ROI
+    led_lowered_y_range: tuple  # (y0, y1) within the ROI
+    led_hue_range: tuple  # (h0, h1) OpenCV hue units 0-179, daytime only
     led_min_saturation: int
     led_min_value_day: int
     led_min_value_night: int
@@ -50,31 +50,36 @@ def load_config(path: str):
         with open(path, "r") as f:
             raw = json.load(f)
 
-    raw.setdefault("mqtt", {
-        "enabled": False,
-        "host": "homeassistant.local",
-        "port": 1883,
-        "username": "",
-        "password": "",
-        "base_topic": "bollards",
-    })
+    raw.setdefault(
+        "mqtt",
+        {
+            "enabled": False,
+            "host": "homeassistant.local",
+            "port": 1883,
+            "username": "",
+            "password": "",
+            "base_topic": "bollards",
+        },
+    )
     raw.setdefault("snapshot_interval_seconds", 2)
     raw.setdefault("smoothing_window", 5)
     raw.setdefault("smoothing_required_agreement", 4)
 
     bollards = []
     for b in raw["bollards"]:
-        bollards.append(BollardConfig(
-            name=b["name"],
-            display_name=b.get("display_name", b["name"]),
-            roi=tuple(b["roi"]),
-            led_raised_y_range=tuple(b["led_raised_y_range"]),
-            led_lowered_y_range=tuple(b["led_lowered_y_range"]),
-            led_hue_range=tuple(b["led_hue_range"]),
-            led_min_saturation=b["led_min_saturation"],
-            led_min_value_day=b["led_min_value_day"],
-            led_min_value_night=b["led_min_value_night"],
-        ))
+        bollards.append(
+            BollardConfig(
+                name=b["name"],
+                display_name=b.get("display_name", b["name"]),
+                roi=tuple(b["roi"]),
+                led_raised_y_range=tuple(b["led_raised_y_range"]),
+                led_lowered_y_range=tuple(b["led_lowered_y_range"]),
+                led_hue_range=tuple(b["led_hue_range"]),
+                led_min_saturation=b["led_min_saturation"],
+                led_min_value_day=b["led_min_value_day"],
+                led_min_value_night=b["led_min_value_night"],
+            )
+        )
 
     return raw, bollards
 
@@ -89,7 +94,7 @@ def open_stream(rtsp_url: str) -> cv2.VideoCapture:
     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
     if not cap.isOpened():
         raise RuntimeError(
-            f"Could not open stream. Test with `ffprobe \"{rtsp_url}\"` "
+            f'Could not open stream. Test with `ffprobe "{rtsp_url}"` '
             "first to confirm the URL/credentials are correct and that "
             "ffmpeg can decode it before troubleshooting further."
         )
@@ -111,7 +116,9 @@ def is_night_frame(frame_bgr: np.ndarray) -> bool:
     return mean_saturation < 25.0
 
 
-def find_led_centroid_y(roi_bgr: np.ndarray, cfg: BollardConfig, night: bool) -> Optional[float]:
+def find_led_centroid_y(
+    roi_bgr: np.ndarray, cfg: BollardConfig, night: bool
+) -> Optional[float]:
     if roi_bgr.size == 0:
         return None
     hsv = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2HSV)
@@ -157,7 +164,7 @@ def evaluate_frame(frame_bgr: np.ndarray, bollards: list) -> dict:
     results = {}
     for cfg in bollards:
         x, y, w, h = cfg.roi
-        roi = frame_bgr[y:y + h, x:x + w]
+        roi = frame_bgr[y : y + h, x : x + w]
         led_y = find_led_centroid_y(roi, cfg, night)
         state = classify_state(led_y, cfg)
         results[cfg.name] = {
