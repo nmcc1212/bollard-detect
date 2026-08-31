@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bollard Detector</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Driveway Bollard Detector</h1>
+    <div id="stream-status" class="badge badge-unknown">checking stream…</div>
+  </header>
+
+  <main>
+    <section class="panel snapshot-panel">
+      <div class="snapshot-wrap">
+        <img id="snapshot" src="/api/snapshot.jpg" alt="camera snapshot">
+        <canvas id="overlay"></canvas>
+      </div>
+      <div class="snapshot-controls">
+        <button id="refresh-btn">Refresh Snapshot</button>
+        <label><input type="checkbox" id="auto-refresh" checked> Auto-refresh (2s)</label>
+      </div>
+      <p class="hint">Click and drag on the image to set the selected bollard's region of interest (ROI).</p>
+    </section>
+
+    <section class="panel states-panel">
+      <h2>Live States</h2>
+      <div id="states-list"></div>
+    </section>
+
+    <section class="panel bollards-panel">
+      <h2>Bollards</h2>
+      <div class="bollard-tabs" id="bollard-tabs"></div>
+      <button id="add-bollard-btn">+ Add Bollard</button>
+
+      <div id="bollard-editor" class="bollard-editor" style="display:none;">
+        <label>Name (id) <input id="f-name" type="text"></label>
+        <label>Display name <input id="f-display-name" type="text"></label>
+
+        <fieldset>
+          <legend>ROI (x, y, w, h) — draw on image or edit directly</legend>
+          <div class="roi-fields">
+            <input id="f-roi-x" type="number" placeholder="x">
+            <input id="f-roi-y" type="number" placeholder="y">
+            <input id="f-roi-w" type="number" placeholder="w">
+            <input id="f-roi-h" type="number" placeholder="h">
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Calibration</legend>
+          <div class="calib-row">
+            <button id="calib-raised-btn">Capture current LED as RAISED</button>
+            <span id="raised-range-display" class="range-display"></span>
+          </div>
+          <div class="calib-row">
+            <button id="calib-lowered-btn">Capture current LED as LOWERED</button>
+            <span id="lowered-range-display" class="range-display"></span>
+          </div>
+          <p class="hint">Move the physical bollard to each position, then click the matching button —
+          it reads the LED's current position from the live frame and sets the range automatically.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Advanced thresholds</legend>
+          <label>LED hue range (day) <input id="f-hue0" type="number" style="width:4em"> - <input id="f-hue1" type="number" style="width:4em"></label>
+          <label>Min saturation (day) <input id="f-sat" type="number"></label>
+          <label>Min brightness (day) <input id="f-val-day" type="number"></label>
+          <label>Min brightness (night) <input id="f-val-night" type="number"></label>
+        </fieldset>
+
+        <div class="editor-actions">
+          <button id="save-bollard-btn">Save Bollard</button>
+          <button id="delete-bollard-btn" class="danger">Delete Bollard</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel connection-panel">
+      <h2>Camera & MQTT Settings</h2>
+      <label>RTSP(S) URL <input id="f-rtsp-url" type="text" style="width:100%"></label>
+      <fieldset>
+        <legend>MQTT / Home Assistant</legend>
+        <label><input id="f-mqtt-enabled" type="checkbox"> Enabled</label>
+        <label>Host <input id="f-mqtt-host" type="text"></label>
+        <label>Port <input id="f-mqtt-port" type="number"></label>
+        <label>Username <input id="f-mqtt-user" type="text"></label>
+        <label>Password <input id="f-mqtt-pass" type="password"></label>
+        <label>Base topic <input id="f-mqtt-topic" type="text"></label>
+      </fieldset>
+      <button id="save-connection-btn">Save Connection Settings</button>
+      <span id="save-status"></span>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

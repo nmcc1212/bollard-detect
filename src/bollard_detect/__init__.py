@@ -1,2 +1,2 @@
-def main() -> None:
-    print("Hello from bollard-detect!")
+from .app import main
+main()

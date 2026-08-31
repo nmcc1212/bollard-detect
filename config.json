@@ -1,38 +1,88 @@
 {
-  "rtsp_url": "rtsps://192.168.0.1:7441/7yfuJtcQltl6NtTV?enableSrtp",
-  "snapshot_interval_seconds": 2,
-  "smoothing_window": 5,
-  "smoothing_required_agreement": 4,
   "bollards": [
     {
+      "led_hue_range": [
+        0,
+        15
+      ],
+      "led_lowered_y_range": [
+        90,
+        120
+      ],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220,
+      "led_raised_y_range": [
+        15,
+        40
+      ],
       "name": "bollard_left",
-      "roi": [900, 260, 85, 130],
-      "led_raised_y_range": [0, 60],
-      "led_lowered_y_range": [160, 220],
-      "led_hue_range": [0, 15],
-      "led_min_saturation": 120,
-      "led_min_value_day": 180,
-      "led_min_value_night": 220
+      "roi": [
+        900,
+        260,
+        85,
+        130
+      ]
     },
     {
+      "led_hue_range": [
+        0,
+        15
+      ],
+      "led_lowered_y_range": [
+        95,
+        125
+      ],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220,
+      "led_raised_y_range": [
+        20,
+        46
+      ],
       "name": "bollard_middle",
-      "roi": [1050, 260, 85, 130],
-      "led_raised_y_range": [0, 60],
-      "led_lowered_y_range": [160, 220],
-      "led_hue_range": [0, 15],
-      "led_min_saturation": 120,
-      "led_min_value_day": 180,
-      "led_min_value_night": 220
+      "roi": [
+        1050,
+        260,
+        85,
+        130
+      ]
     },
     {
-      "name": "bollard_right",
-      "roi": [1230, 280, 85, 130],
-      "led_raised_y_range": [0, 60],
-      "led_lowered_y_range": [160, 220],
-      "led_hue_range": [0, 15],
+      "led_hue_range": [
+        0,
+        15
+      ],
+      "led_lowered_y_range": [
+        100,
+        125
+      ],
       "led_min_saturation": 120,
       "led_min_value_day": 180,
-      "led_min_value_night": 220
+      "led_min_value_night": 220,
+      "led_raised_y_range": [
+        10,
+        40
+      ],
+      "name": "bollard_right",
+      "roi": [
+        1230,
+        280,
+        85,
+        130
+      ]
     }
-  ]
+  ],
+  "mqtt": {
+    "enabled": true,
+    "host": "homeassistant.local",
+    "port": 1883,
+    "username": "",
+    "password": "",
+    "base_topic": "bollards"
+  },
+  "rtsp_url": "CHANGEME",
+  "smoothing_required_agreement": 4,
+  "smoothing_window": 5,
+  "snapshot_interval_seconds": 2
 }

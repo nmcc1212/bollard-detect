@@ -226,12 +226,11 @@ def main():
     try:
         if args.snapshot:
             frame = grab_frame(cap)
-
-            # Draw configured bollard ROIs on the snapshot for calibration.
             for cfg in bollards:
                 x, y, w, h = cfg.roi
-
-                # Rectangle around the bollard's full travel range.
+                # ---------------------------------------------------------
+                # Draw the main ROI.
+                # ---------------------------------------------------------
                 cv2.rectangle(
                     frame,
                     (x, y),
@@ -239,26 +238,130 @@ def main():
                     (0, 255, 0),
                     2
                 )
-
-                # Label the rectangle with the bollard name.
+                # Bollard name.
                 cv2.putText(
                     frame,
                     cfg.name,
-                    (x, max(20, y - 8)),
+                    (x, max(20, y - 10)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.7,
                     (0, 255, 0),
                     2,
                     cv2.LINE_AA
                 )
-
+                # ---------------------------------------------------------
+                # Draw LED raised/lowered Y ranges.
+                #
+                # These Y values are relative to the ROI, so convert them
+                # to full-frame coordinates by adding the ROI's Y position.
+                # ---------------------------------------------------------
+                raised_y0, raised_y1 = cfg.led_raised_y_range
+                lowered_y0, lowered_y1 = cfg.led_lowered_y_range
+                def draw_led_range(y0, y1, label, thickness=2):
+                    full_y0 = y + y0
+                    full_y1 = y + y1
+                    # Only draw the portion that falls inside the image.
+                    frame_h, frame_w = frame.shape[:2]
+                    clipped_y0 = max(0, min(frame_h - 1, full_y0))
+                    clipped_y1 = max(0, min(frame_h - 1, full_y1))
+                    # Draw horizontal boundaries.
+                    cv2.line(
+                        frame,
+                        (x, clipped_y0),
+                        (x + w, clipped_y0),
+                        (255, 255, 0),
+                        thickness
+                    )
+                    cv2.line(
+                        frame,
+                        (x, clipped_y1),
+                        (x + w, clipped_y1),
+                        (255, 255, 0),
+                        thickness
+                    )
+                    # Draw a translucent-ish band using an overlay.
+                    overlay = frame.copy()
+                    cv2.rectangle(
+                        overlay,
+                        (x, clipped_y0),
+                        (x + w, clipped_y1),
+                        (255, 255, 0),
+                        -1
+                    )
+                    cv2.addWeighted(overlay, 0.12, frame, 0.88, 0, frame)
+                    # Label.
+                    text_y = max(20, clipped_y0 - 5)
+                    cv2.putText(
+                        frame,
+                        f"{label}: ROI y={y0}..{y1}",
+                        (x + w + 8, text_y),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 0),
+                        1,
+                        cv2.LINE_AA
+                    )
+                draw_led_range(
+                    raised_y0,
+                    raised_y1,
+                    "RAISED"
+                )
+                draw_led_range(
+                    lowered_y0,
+                    lowered_y1,
+                    "LOWERED"
+                )
+                # ---------------------------------------------------------
+                # Draw the centre of each configured LED range.
+                # ---------------------------------------------------------
+                raised_centre = y + (raised_y0 + raised_y1) / 2
+                lowered_centre = y + (lowered_y0 + lowered_y1) / 2
+                cv2.circle(
+                    frame,
+                    (x + w // 2, int(raised_centre)),
+                    5,
+                    (0, 255, 255),
+                    -1
+                )
+                cv2.circle(
+                    frame,
+                    (x + w // 2, int(lowered_centre)),
+                    5,
+                    (0, 255, 255),
+                    -1
+                )
+                # ---------------------------------------------------------
+                # Draw configuration text to the right of the ROI.
+                # ---------------------------------------------------------
+                text_x = x + w + 12
+                text_y = y + 20
+                line_height = 20
+                config_lines = [
+                    f"ROI: [{x}, {y}, {w}, {h}]",
+                    f"Raised Y: {raised_y0}..{raised_y1}",
+                    f"Lowered Y: {lowered_y0}..{lowered_y1}",
+                    f"Hue: {cfg.led_hue_range[0]}..{cfg.led_hue_range[1]}",
+                    f"Min Sat: {cfg.led_min_saturation}",
+                    f"Day Min V: {cfg.led_min_value_day}",
+                    f"Night Min V: {cfg.led_min_value_night}",
+                ]
+                for i, text in enumerate(config_lines):
+                    cv2.putText(
+                        frame,
+                        text,
+                        (text_x, text_y + i * line_height),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        1,
+                        cv2.LINE_AA
+                    )
             cv2.imwrite(args.snapshot, frame)
             print(
                 f"Saved snapshot to {args.snapshot} "
-                f"({frame.shape[1]}x{frame.shape[0]}) with ROI rectangles"
+                f"({frame.shape[1]}x{frame.shape[0]}) with calibration overlays"
             )
             return
-
         if args.once:
             frame = grab_frame(cap)
             results = evaluate_frame(frame, bollards)
