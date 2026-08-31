@@ -271,11 +271,11 @@ def main():
                 raised_y0, raised_y1 = cfg.led_raised_y_range
                 lowered_y0, lowered_y1 = cfg.led_lowered_y_range
 
-                def draw_led_range(y0, y1, label, thickness=2):
+                def draw_led_range(y0, y1, label, thickness=2, *, x=x, y=y, w=w):
                     full_y0 = y + y0
                     full_y1 = y + y1
                     # Only draw the portion that falls inside the image.
-                    frame_h, frame_w = frame.shape[:2]
+                    frame_h, _ = frame.shape[:2]
                     clipped_y0 = max(0, min(frame_h - 1, full_y0))
                     clipped_y1 = max(0, min(frame_h - 1, full_y1))
                     # Draw horizontal boundaries.

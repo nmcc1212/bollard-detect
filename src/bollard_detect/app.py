@@ -82,7 +82,7 @@ def get_mqtt_client(mqtt_cfg: dict):
         client.loop_start()
         client.publish(availability_topic, "online", retain=True)
         _mqtt_client = client
-    except Exception as e:
+    except (OSError, ValueError, TypeError) as e:
         print(f"MQTT connection failed: {e}")
         return None
 
@@ -136,12 +136,11 @@ def background_loop():
 
     cap = None
     smoother = None
-    last_mqtt_cfg_signature = None
 
     while True:
         try:
             raw_cfg, bollards = detector.load_config(CONFIG_PATH)
-        except Exception as e:
+        except (FileNotFoundError, OSError, TypeError, ValueError) as e:
             with STATE_LOCK:
                 STREAM_ERROR = f"Config error: {e}"
                 STREAM_OK = False
@@ -161,7 +160,7 @@ def background_loop():
                 with STATE_LOCK:
                     STREAM_OK = True
                     STREAM_ERROR = None
-            except Exception as e:
+            except (OSError, RuntimeError, ValueError) as e:
                 with STATE_LOCK:
                     STREAM_OK = False
                     STREAM_ERROR = str(e)
@@ -191,10 +190,11 @@ def background_loop():
             with STATE_LOCK:
                 STREAM_OK = False
                 STREAM_ERROR = str(e)
-            try:
-                cap.release()
-            except Exception:
-                pass
+            if cap is not None:
+                try:
+                    cap.release()
+                except OSError:
+                    pass
             cap = None
             time.sleep(2)
             continue
@@ -226,7 +226,7 @@ def api_save_config():
         return jsonify({"error": "config must include rtsp_url and bollards"}), 400
     try:
         detector.save_config(CONFIG_PATH, new_cfg)
-    except Exception as e:
+    except (OSError, TypeError, ValueError) as e:
         return jsonify({"error": str(e)}), 400
     return jsonify({"ok": True})
 
@@ -275,7 +275,7 @@ def api_snapshot():
                 1,
                 cv2.LINE_AA,
             )
-    except Exception:
+    except (TypeError, ValueError, cv2.error):
         pass
 
     ok, buf = cv2.imencode(".jpg", frame)
@@ -338,7 +338,7 @@ def main():
     seed_config_if_missing()
     thread = threading.Thread(target=background_loop, daemon=True)
     thread.start()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT") or 8080))
 
 
 if __name__ == "__main__":
