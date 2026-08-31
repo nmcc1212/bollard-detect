@@ -226,8 +226,37 @@ def main():
     try:
         if args.snapshot:
             frame = grab_frame(cap)
+
+            # Draw configured bollard ROIs on the snapshot for calibration.
+            for cfg in bollards:
+                x, y, w, h = cfg.roi
+
+                # Rectangle around the bollard's full travel range.
+                cv2.rectangle(
+                    frame,
+                    (x, y),
+                    (x + w, y + h),
+                    (0, 255, 0),
+                    2
+                )
+
+                # Label the rectangle with the bollard name.
+                cv2.putText(
+                    frame,
+                    cfg.name,
+                    (x, max(20, y - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                    cv2.LINE_AA
+                )
+
             cv2.imwrite(args.snapshot, frame)
-            print(f"Saved snapshot to {args.snapshot} ({frame.shape[1]}x{frame.shape[0]})")
+            print(
+                f"Saved snapshot to {args.snapshot} "
+                f"({frame.shape[1]}x{frame.shape[0]}) with ROI rectangles"
+            )
             return
 
         if args.once:
