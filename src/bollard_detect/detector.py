@@ -9,8 +9,7 @@ app.py (web UI + MQTT loop). Keeping this separate means the web UI's
 import collections
 import json
 import threading
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 import cv2
 import numpy as np
@@ -46,9 +45,8 @@ def default_bollard(name: str) -> dict:
 
 
 def load_config(path: str):
-    with CONFIG_LOCK:
-        with open(path, "r") as f:
-            raw = json.load(f)
+    with CONFIG_LOCK, open(path, "r") as f:
+        raw = json.load(f)
 
     raw.setdefault(
         "mqtt",
@@ -85,9 +83,8 @@ def load_config(path: str):
 
 
 def save_config(path: str, raw: dict):
-    with CONFIG_LOCK:
-        with open(path, "w") as f:
-            json.dump(raw, f, indent=2)
+    with CONFIG_LOCK, open(path, "w") as f:
+        json.dump(raw, f, indent=2)
 
 
 def open_stream(rtsp_url: str) -> cv2.VideoCapture:
@@ -118,7 +115,7 @@ def is_night_frame(frame_bgr: np.ndarray) -> bool:
 
 def find_led_centroid_y(
     roi_bgr: np.ndarray, cfg: BollardConfig, night: bool
-) -> Optional[float]:
+) -> float | None:
     if roi_bgr.size == 0:
         return None
     hsv = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2HSV)
@@ -147,7 +144,7 @@ def find_led_centroid_y(
     return M["m01"] / M["m00"]
 
 
-def classify_state(led_y: Optional[float], cfg: BollardConfig) -> str:
+def classify_state(led_y: float | None, cfg: BollardConfig) -> str:
     if led_y is None:
         return "UNKNOWN"
     r0, r1 = cfg.led_raised_y_range

@@ -9,14 +9,13 @@ Run in Docker:      see Dockerfile / docker-compose.yml
 Web UI: http://<host>:8080/
 """
 
-import base64
 import json
 import os
 import threading
 import time
 
 import cv2
-from flask import Flask, jsonify, render_template, request, Response
+from flask import Flask, Response, jsonify, render_template, request
 
 from . import detector
 
