@@ -63,9 +63,28 @@
         </fieldset>
 
         <fieldset>
-          <legend>Advanced thresholds</legend>
-          <label>LED hue range (day) <input id="f-hue0" type="number" style="width:4em"> - <input id="f-hue1" type="number" style="width:4em"></label>
-          <label>Min saturation (day) <input id="f-sat" type="number"></label>
+          <legend>Marker type</legend>
+          <label>
+            <select id="f-target-type">
+              <option value="white">White band / reflector (low color, bright)</option>
+              <option value="color">Colored LED (specific hue)</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset id="color-fields">
+          <legend>Colored LED thresholds (day)</legend>
+          <label>Hue range <input id="f-hue0" type="number" style="width:4em"> - <input id="f-hue1" type="number" style="width:4em"></label>
+          <label>Min saturation <input id="f-sat" type="number"></label>
+        </fieldset>
+
+        <fieldset id="white-fields">
+          <legend>White band thresholds (day)</legend>
+          <label>Max saturation (lower = stricter "white") <input id="f-max-sat-white" type="number"></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Brightness thresholds</legend>
           <label>Min brightness (day) <input id="f-val-day" type="number"></label>
           <label>Min brightness (night) <input id="f-val-night" type="number"></label>
         </fieldset>

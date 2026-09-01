@@ -14,12 +14,21 @@ function defaultBollard(name) {
     roi: [100, 100, 60, 200],
     led_raised_y_range: [0, 40],
     led_lowered_y_range: [160, 200],
+    led_target_type: "white",
     led_hue_range: [0, 15],
     led_min_saturation: 120,
+    led_max_saturation_white: 60,
     led_min_value_day: 180,
     led_min_value_night: 220,
   };
 }
+
+function updateTargetTypeFieldVisibility() {
+  const type = document.getElementById("f-target-type").value;
+  document.getElementById("color-fields").style.display = type === "color" ? "block" : "none";
+  document.getElementById("white-fields").style.display = type === "white" ? "block" : "none";
+}
+document.getElementById("f-target-type").addEventListener("change", updateTargetTypeFieldVisibility);
 
 async function loadConfig() {
   const res = await fetch("/api/config");
@@ -66,11 +75,14 @@ function selectBollard(name) {
   document.getElementById("f-roi-y").value = b.roi[1];
   document.getElementById("f-roi-w").value = b.roi[2];
   document.getElementById("f-roi-h").value = b.roi[3];
+  document.getElementById("f-target-type").value = b.led_target_type || "white";
   document.getElementById("f-hue0").value = b.led_hue_range[0];
   document.getElementById("f-hue1").value = b.led_hue_range[1];
   document.getElementById("f-sat").value = b.led_min_saturation;
+  document.getElementById("f-max-sat-white").value = b.led_max_saturation_white != null ? b.led_max_saturation_white : 60;
   document.getElementById("f-val-day").value = b.led_min_value_day;
   document.getElementById("f-val-night").value = b.led_min_value_night;
+  updateTargetTypeFieldVisibility();
   document.getElementById("raised-range-display").textContent =
     `current: [${b.led_raised_y_range[0]}, ${b.led_raised_y_range[1]}]`;
   document.getElementById("lowered-range-display").textContent =
@@ -89,11 +101,13 @@ function readEditorIntoBollardObject() {
     parseInt(document.getElementById("f-roi-w").value) || 10,
     parseInt(document.getElementById("f-roi-h").value) || 10,
   ];
+  b.led_target_type = document.getElementById("f-target-type").value;
   b.led_hue_range = [
     parseInt(document.getElementById("f-hue0").value) || 0,
     parseInt(document.getElementById("f-hue1").value) || 15,
   ];
   b.led_min_saturation = parseInt(document.getElementById("f-sat").value) || 120;
+  b.led_max_saturation_white = parseInt(document.getElementById("f-max-sat-white").value) || 60;
   b.led_min_value_day = parseInt(document.getElementById("f-val-day").value) || 180;
   b.led_min_value_night = parseInt(document.getElementById("f-val-night").value) || 220;
   return b;
