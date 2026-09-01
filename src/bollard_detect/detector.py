@@ -24,8 +24,10 @@ class BollardConfig:
     roi: tuple  # (x, y, w, h) in full-frame coordinates
     led_raised_y_range: tuple  # (y0, y1) within the ROI
     led_lowered_y_range: tuple  # (y0, y1) within the ROI
-    led_hue_range: tuple  # (h0, h1) OpenCV hue units 0-179, daytime only
-    led_min_saturation: int
+    led_target_type: str  # "color" (colored LED) or "white" (white band/reflector)
+    led_hue_range: tuple  # (h0, h1) OpenCV hue units 0-179, "color" mode only
+    led_min_saturation: int  # "color" mode only
+    led_max_saturation_white: int  # "white" mode only -- how colorless a pixel must be
     led_min_value_day: int
     led_min_value_night: int
 
@@ -37,8 +39,10 @@ def default_bollard(name: str) -> dict:
         "roi": [100, 100, 60, 200],
         "led_raised_y_range": [0, 40],
         "led_lowered_y_range": [160, 200],
+        "led_target_type": "white",
         "led_hue_range": [0, 15],
         "led_min_saturation": 120,
+        "led_max_saturation_white": 60,
         "led_min_value_day": 180,
         "led_min_value_night": 220,
     }
@@ -72,8 +76,10 @@ def load_config(path: str):
                 roi=tuple(b["roi"]),
                 led_raised_y_range=tuple(b["led_raised_y_range"]),
                 led_lowered_y_range=tuple(b["led_lowered_y_range"]),
+                led_target_type=b.get("led_target_type", "color"),
                 led_hue_range=tuple(b["led_hue_range"]),
                 led_min_saturation=b["led_min_saturation"],
+                led_max_saturation_white=b.get("led_max_saturation_white", 60),
                 led_min_value_day=b["led_min_value_day"],
                 led_min_value_night=b["led_min_value_night"],
             )
@@ -122,8 +128,17 @@ def find_led_centroid_y(
     h, s, v = cv2.split(hsv)
 
     if night:
+        # No reliable color at night -- just take the brightest blob.
+        # This also happens to be correct for white markers by day, since
+        # white = high brightness + low saturation, same signal IR sees.
         mask = cv2.inRange(v, cfg.led_min_value_night, 255)
+    elif cfg.led_target_type == "white":
+        # White band/reflector: low saturation (colorless) + bright.
+        sat_mask = cv2.inRange(s, 0, cfg.led_max_saturation_white)
+        val_mask = cv2.inRange(v, cfg.led_min_value_day, 255)
+        mask = cv2.bitwise_and(sat_mask, val_mask)
     else:
+        # Colored LED: specific hue + must actually be saturated (colorful).
         hue_mask = cv2.inRange(h, cfg.led_hue_range[0], cfg.led_hue_range[1])
         sat_mask = cv2.inRange(s, cfg.led_min_saturation, 255)
         val_mask = cv2.inRange(v, cfg.led_min_value_day, 255)

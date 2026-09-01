@@ -10,14 +10,14 @@ Web UI: http://<host>:8080/
 """
 
 import json
+import logging
 import os
 import threading
 import time
 
 import cv2
+import detector
 from flask import Flask, Response, jsonify, render_template, request
-
-from . import detector
 
 CONFIG_PATH = os.environ.get("BOLLARD_CONFIG", "config.json")
 
@@ -38,6 +38,7 @@ def seed_config_if_missing():
 
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 # Shared state between the background loop and the web routes.
 STATE_LOCK = threading.Lock()
@@ -82,8 +83,8 @@ def get_mqtt_client(mqtt_cfg: dict):
         client.loop_start()
         client.publish(availability_topic, "online", retain=True)
         _mqtt_client = client
-    except (OSError, ValueError, TypeError) as e:
-        print(f"MQTT connection failed: {e}")
+    except (ConnectionError, OSError, TimeoutError, ValueError) as exc:
+        logger.warning("MQTT connection failed: %s", exc)
         return None
 
     return _mqtt_client
@@ -140,9 +141,9 @@ def background_loop():
     while True:
         try:
             raw_cfg, bollards = detector.load_config(CONFIG_PATH)
-        except (FileNotFoundError, OSError, TypeError, ValueError) as e:
+        except (OSError, TypeError, ValueError) as exc:
             with STATE_LOCK:
-                STREAM_ERROR = f"Config error: {e}"
+                STREAM_ERROR = f"Config error: {exc}"
                 STREAM_OK = False
             time.sleep(3)
             continue
@@ -160,10 +161,10 @@ def background_loop():
                 with STATE_LOCK:
                     STREAM_OK = True
                     STREAM_ERROR = None
-            except (OSError, RuntimeError, ValueError) as e:
+            except (OSError, RuntimeError, TypeError, ValueError) as exc:
                 with STATE_LOCK:
                     STREAM_OK = False
-                    STREAM_ERROR = str(e)
+                    STREAM_ERROR = str(exc)
                 time.sleep(3)
                 continue
 
@@ -186,15 +187,14 @@ def background_loop():
                     publish_ha_discovery(client, mqtt_cfg, bollards)
                     publish_states(client, mqtt_cfg, stable)
 
-        except RuntimeError as e:
+        except RuntimeError as exc:
             with STATE_LOCK:
                 STREAM_OK = False
-                STREAM_ERROR = str(e)
-            if cap is not None:
-                try:
-                    cap.release()
-                except OSError:
-                    pass
+                STREAM_ERROR = str(exc)
+            try:
+                cap.release()
+            except (AttributeError, OSError, RuntimeError):
+                logger.exception("Error releasing video capture after stream failure")
             cap = None
             time.sleep(2)
             continue
@@ -226,8 +226,8 @@ def api_save_config():
         return jsonify({"error": "config must include rtsp_url and bollards"}), 400
     try:
         detector.save_config(CONFIG_PATH, new_cfg)
-    except (OSError, TypeError, ValueError) as e:
-        return jsonify({"error": str(e)}), 400
+    except (OSError, TypeError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
     return jsonify({"ok": True})
 
 
@@ -276,7 +276,7 @@ def api_snapshot():
                 cv2.LINE_AA,
             )
     except (TypeError, ValueError, cv2.error):
-        pass
+        logger.debug("Could not draw snapshot overlay", exc_info=True)
 
     ok, buf = cv2.imencode(".jpg", frame)
     if not ok:
@@ -338,7 +338,8 @@ def main():
     seed_config_if_missing()
     thread = threading.Thread(target=background_loop, daemon=True)
     thread.start()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT") or 8080))
+    port_value = os.environ.get("PORT")
+    app.run(host="0.0.0.0", port=int(port_value) if port_value else 8080)
 
 
 if __name__ == "__main__":

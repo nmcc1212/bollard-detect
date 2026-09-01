@@ -1,88 +1,97 @@
 {
-  "bollards": [
-    {
-      "led_hue_range": [
-        0,
-        15
-      ],
-      "led_lowered_y_range": [
-        90,
-        120
-      ],
-      "led_min_saturation": 120,
-      "led_min_value_day": 180,
-      "led_min_value_night": 220,
-      "led_raised_y_range": [
-        15,
-        40
-      ],
-      "name": "bollard_left",
-      "roi": [
-        900,
-        260,
-        85,
-        130
-      ]
-    },
-    {
-      "led_hue_range": [
-        0,
-        15
-      ],
-      "led_lowered_y_range": [
-        95,
-        125
-      ],
-      "led_min_saturation": 120,
-      "led_min_value_day": 180,
-      "led_min_value_night": 220,
-      "led_raised_y_range": [
-        20,
-        46
-      ],
-      "name": "bollard_middle",
-      "roi": [
-        1050,
-        260,
-        85,
-        130
-      ]
-    },
-    {
-      "led_hue_range": [
-        0,
-        15
-      ],
-      "led_lowered_y_range": [
-        100,
-        125
-      ],
-      "led_min_saturation": 120,
-      "led_min_value_day": 180,
-      "led_min_value_night": 220,
-      "led_raised_y_range": [
-        10,
-        40
-      ],
-      "name": "bollard_right",
-      "roi": [
-        1230,
-        280,
-        85,
-        130
-      ]
-    }
-  ],
+  "rtsp_url": "rtsps://username:password@camera-ip:7441/stream-path",
+  "snapshot_interval_seconds": 2,
+  "smoothing_window": 5,
+  "smoothing_required_agreement": 4,
   "mqtt": {
-    "enabled": true,
+    "enabled": false,
     "host": "homeassistant.local",
     "port": 1883,
     "username": "",
     "password": "",
     "base_topic": "bollards"
   },
-  "rtsp_url": "CHANGEME",
-  "smoothing_required_agreement": 4,
-  "smoothing_window": 5,
-  "snapshot_interval_seconds": 2
+  "bollards": [
+    {
+      "name": "bollard_left",
+      "display_name": "Bollard Left",
+      "roi": [
+        120,
+        300,
+        60,
+        220
+      ],
+      "led_raised_y_range": [
+        0,
+        60
+      ],
+      "led_lowered_y_range": [
+        160,
+        220
+      ],
+      "led_hue_range": [
+        0,
+        15
+      ],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220,
+      "led_target_type": "white",
+      "led_max_saturation_white": 60
+    },
+    {
+      "name": "bollard_middle",
+      "display_name": "Bollard Middle",
+      "roi": [
+        280,
+        300,
+        60,
+        220
+      ],
+      "led_raised_y_range": [
+        0,
+        60
+      ],
+      "led_lowered_y_range": [
+        160,
+        220
+      ],
+      "led_hue_range": [
+        0,
+        15
+      ],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220,
+      "led_target_type": "white",
+      "led_max_saturation_white": 60
+    },
+    {
+      "name": "bollard_right",
+      "display_name": "Bollard Right",
+      "roi": [
+        440,
+        300,
+        60,
+        220
+      ],
+      "led_raised_y_range": [
+        0,
+        60
+      ],
+      "led_lowered_y_range": [
+        160,
+        220
+      ],
+      "led_hue_range": [
+        0,
+        15
+      ],
+      "led_min_saturation": 120,
+      "led_min_value_day": 180,
+      "led_min_value_night": 220,
+      "led_target_type": "white",
+      "led_max_saturation_white": 60
+    }
+  ]
 }
