@@ -1,0 +1,11 @@
+services:
+  bollard-detect:
+    image: ghcr.io/nmcc1212/bollard-detect:latest
+    container_name: bollard-detect
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    environment:
+      PORT: 8080
+    volumes:
+      - ./config.json:/app/config.json
