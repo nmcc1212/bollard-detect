@@ -16,8 +16,9 @@ import threading
 import time
 
 import cv2
-from . import detector
 from flask import Flask, Response, jsonify, render_template, request
+
+from . import detector
 
 CONFIG_PATH = os.environ.get("BOLLARD_CONFIG", "config.json")
 

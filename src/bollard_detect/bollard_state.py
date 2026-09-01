@@ -10,6 +10,7 @@ import sys
 import time
 
 import cv2
+
 from . import detector
 
 
